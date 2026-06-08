@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>මගේ AI Bot - Netlify</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {font-family: Arial; background: #343541; color: white; margin: 0;}
+        #chatbox {max-width: 700px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; padding: 20px;}
+        #messages {flex: 1; overflow-y: auto; padding: 20px; background: #444654; border-radius: 10px; margin-bottom: 10px;}
+       .msg {margin: 10px 0; padding: 12px; border-radius: 8px; max-width: 80%;}
+       .user {background: #565869; margin-left: auto; text-align: right;}
+       .ai {background: #40414f; margin-right: auto;}
+        #input-area {display: flex;}
+        #msgInput {flex: 1; padding: 14px; border: none; border-radius: 8px; background: #40414f; color: white; font-size: 16px;}
+        button {padding: 14px 24px; margin-left: 8px; border: none; border-radius: 8px; background: #10a37f; color: white; cursor: pointer; font-weight: bold;}
+        button:disabled {background: grey;}
+        h2 {text-align: center; margin-top: 0;}
+    </style>
+</head>
+<body>
+    <div id="chatbox">
+        <h2>🤖 Groq Llama3 - Netlify</h2>
+        <div id="messages">
+            <div class="msg ai">හෙලෝ! මොනවාහරි අහපන්.</div>
+        </div>
+        <div id="input-area">
+            <input type="text" id="msgInput" placeholder="Type a message... Enter ගහන්න">
+            <button onclick="sendMsg()" id="sendBtn">Send</button>
+        </div>
+    </div>
+
+<script>
+async function sendMsg() {
+    const input = document.getElementById('msgInput');
+    const btn = document.getElementById('sendBtn');
+    const msg = input.value.trim();
+    if(!msg) return;
+
+    addMsg(msg, 'user');
+    input.value = '';
+    btn.disabled = true;
+
+    const typingId = addMsg('Typing...', 'ai', 'typing');
+
+    try {
+        // Netlify function එකේ URL එක /api/chat
+        const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({message: msg})
+        });
+        const data = await res.json();
+        document.getElementById(typingId).remove();
+        addMsg(data.reply, 'ai');
+    } catch {
+        document.getElementById(typingId).remove();
+        addMsg('Error! Network එක check කරපන්.', 'ai');
+    }
+    btn.disabled = false;
+    input.focus();
+}
+
+function addMsg(text, sender, cls='') {
+    const div = document.createElement('div');
+    const id = 'msg' + Date.now();
+    div.id = id;
+    div.className = 'msg ' + sender + ' + cls;
+    div.innerText = text;
+    document.getElementById('messages').appendChild(div);
+    document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+    return id;
+}
+
+document.getElementById('msgInput').addEventListener('keypress', e => {
+    if(e.key === 'Enter') sendMsg();
+});
+</script>
+</body>
+</html>
